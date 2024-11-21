@@ -1,41 +1,41 @@
 <?php
 
-use Illuminate\Http\Response;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use Symfony\Component\HttpFoundation\Response as ResponseAlias;
-
 
 Route::get('/', function(){
     return redirect()->route('tasks.index');
 });
 
-Route::get('/tasks',function() use($tasks){
+Route::get('/tasks',function() {
     return view('index', [
-        'tasks' => $tasks
+        'tasks' => \App\Models\Task::latest()->where('completed', true)->get()
     ]);
 })->name('tasks.index');
 
-Route::get('/tasks/{id}', function ($id) use ($tasks) {
+Route::view('tasks/create', 'create')
+    ->name('tasks.create');
+
+Route::get('/tasks/{id}', function ($id) {
     return view('show',['task'=>\App\Models\Task::findOrFail($id)]);
 })->name('tasks.show');
 
-//Route::get('/hello', function(){
-//    return 'hello';
-//})->name('hello');
-//
-//Route::get('hallo', function(){
-//    return redirect()->route('hello');
-//});
-//
-//Route::get('/greet/{name}', function ($name) {
-//    return 'Hello' . ' ' . $name . '!';
-//});
-//
-//Route::fallback(function (){
-//    return 'Still got somewhere';
-//});
+Route::post('/tasks', function (Request $request) {
+    $data = $request->validate([
+        'title'=>'required|max:255',
+        'description'=>'required',
+        'long_description' => 'required'
+    ]);
 
-//GET
-//POST
-//PUT
-//DELETE
+    $task = new \App\Models\Task();
+    $task->title = $data['title'];
+    $task->description = $data['description'];
+    $task->long_description = $data['long_description'];
+
+    $task->save();
+
+    return redirect()->route('tasks.show',['id' => $task->id]);
+})->name('tasks.store');
+
+
+
